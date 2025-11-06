@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAMEPLA631 | AI Centrum Podpory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Svetlá Téma (Default)
+                        'light-bg': '#F1F5F9',      
+                        'light-card': '#FFFFFF',    
+                        'light-secondary': '#E2E8F0',
+                        'text-primary': '#1E293B', 
+                        'text-secondary': '#475569', 
+
+                        // Tmavá Téma
+                        'dark-bg': '#0F172A',       // Slate 900
+                        'dark-card': '#1E293B',     // Slate 800
+                        'dark-secondary': '#334155', // Slate 700
+                        'dark-text-light': '#F1F5F9', 
+                        'dark-text-gray': '#94A3B8',  
+                        
+                        // Accent (rovnaký pre obe témy)
+                        'game-accent': '#38BDF8', 
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Počiatočné nastavenie, ktoré sa prepisuje v JS */
+        body {
+            transition: background-color 0.3s ease;
+        }
+        .chat-container {
+            max-height: 80vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        .chat-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+        .typing-dot {
+            animation: pulse 1.5s infinite;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="font-sans flex items-center justify-center min-h-screen p-4 bg-light-bg">
+
+    <!-- Main Chat Card -->
+    <div id="chat-card" class="w-full max-w-xl rounded-xl shadow-2xl flex flex-col h-[90vh] md:h-[80vh] transition-colors duration-300 bg-light-card">
+        
+        <!-- Header -->
+        <header id="chat-header" class="p-4 border-b flex items-center justify-between rounded-t-xl transition-colors duration-300 bg-light-secondary border-light-secondary">
+            
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-game-accent rounded-full flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-light-card">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.316-2.316L13.5 6l1.035-.259a3.375 3.375 0 0 0 2.316-2.316L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.316 2.316L22.5 6l-1.035.259a3.375 3.375 0 0 0-2.316 2.316Z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 id="title-text" class="text-lg font-semibold text-text-primary transition-colors duration-300">GAMEPLA631 AI Podpora</h1>
+                    <p class="text-game-accent text-sm">Online • Špecialista na bany a AI problémy</p>
+                </div>
+            </div>
+
+            <!-- Theme Toggle Button -->
+            <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-full hover:bg-light-secondary transition-colors duration-300">
+                <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-text-primary">
+                    <!-- Sun Icon (Light Mode Default) -->
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.364-1.554 1.554M21 12h-2.25m-.364 6.364-1.554-1.554M12 18.75V21m-4.606-2.193-1.554-1.554M3 12H5.25M7.864 5.636 6.31 4.082m10.82 2.152L19.4 4.082M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-grow p-4 chat-container">
+            <!-- Initial welcome message -->
+            <div class="flex justify-start mb-4">
+                <div class="ai-bubble max-w-xs md:max-w-md p-3 rounded-xl shadow-md bg-light-secondary text-text-primary">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-sm font-bold text-game-accent">GAMEPLA631 AI</p>
+                        <button onclick="readText(this)" data-text="Vitajte v centre AI podpory GAMEPLA631! Som tu, aby som vám pomohol s otázkami ohľadom herných zákazov (banov) alebo problémov súvisiacich s AI. Ako vám môžem dnes pomôcť?" class="tts-button text-game-accent hover:text-sky-400 p-1 rounded-full transition-colors duration-200" title="Prečítať správu nahlas">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                                 <path d="M13.5 4.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM11.373 17.568a9.982 9.982 0 0 0 1.956.126 10.024 10.024 0 0 0 2.222-.241c2.18-.564 3.766-2.613 3.766-4.992V8.25a.75.75 0 0 0-.75-.75h-2.25a.75.75 0 0 0-.75.75v3.257c0 1.25-.973 2.3-2.379 2.454a8.956 8.956 0 0 0-1.879-.115 9.07 9.07 0 0 0-2.312.241c-1.406.154-2.379 1.204-2.379 2.454V17.25c0 .414.336.75.75.75h.375a.75.75 0 0 0 .75-.75v-2.146a.75.75 0 0 1 .715-.747 9.172 9.172 0 0 0 1.547-.197Z" />
+                             </svg>
+                        </button>
+                    </div>
+                    <p>Vitajte v centre AI podpory GAMEPLA631! Som tu, aby som vám pomohol s otázkami ohľadom herných zákazov (banov) alebo problémov súvisiacich s AI. Ako vám môžem dnes pomôcť?</p>
+                    <p class="text-xs mt-2 text-text-secondary text-right">0 min. dozadu</p>
+                </div>
+            </div>
+            <!-- Messages will be injected here -->
+
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" class="flex justify-start mb-4 hidden">
+                <div class="ai-bubble max-w-xs md:max-w-md p-3 rounded-xl shadow-md bg-light-secondary text-text-primary">
+                    <p class="text-sm font-bold text-game-accent mb-1">GAMEPLA631 AI</p>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-text-secondary">Ďakujem</span>
+                        <span class="text-game-accent typing-dot text-lg">.</span>
+                        <span class="text-game-accent typing-dot text-lg">.</span>
+                        <span class="text-game-accent typing-dot text-lg">.</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 border-t transition-colors duration-300 border-light-secondary">
+            <div class="flex space-x-2">
+                <input type="text" id="user-input" placeholder="Napíšte svoju správu..." 
+                       class="flex-grow p-3 rounded-lg border focus:ring-2 focus:ring-game-accent focus:border-game-accent transition duration-200 bg-light-secondary text-text-primary border-light-secondary"
+                       onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()" id="send-button"
+                        class="bg-game-accent hover:bg-sky-500 text-light-card font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.249 4.39A2.25 2.25 0 0 1 5.39 2.25L21 12 5.39 21.751a2.25 2.25 0 0 1-2.14-2.14L6 12Z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- Firebase Setup (Mandatory for Canvas Environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let userId = 'user-unknown';
+
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Prihlásenie pomocou custom tokenu alebo anonymne
+                if (initialAuthToken) {
+                    signInWithCustomToken(auth, initialAuthToken)
+                        .then((userCredential) => {
+                            userId = userCredential.user.uid;
+                            console.log("Firebase signed in with custom token. User ID:", userId);
+                        })
+                        .catch((error) => {
+                            console.error("Custom token sign-in failed:", error);
+                            signInAnonymously(auth).then(res => { userId = res.user.uid; console.log("Signed in anonymously."); });
+                        });
+                } else {
+                    signInAnonymously(auth).then(res => { userId = res.user.uid; console.log("Signed in anonymously."); });
+                }
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        } else {
+            console.warn("Firebase configuration not found. Running without persistent storage.");
+        }
+        
+        // --- Gemini API Configuration ---
+        const apiKey = "AIzaSyAzWkdCBiqlrFZODs2zEichlIWe68Wo2eI"; 
+        const modelName = "gemini-2.5-flash-preview-09-2025";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        // System Instruction in Slovak, tailored for GAMEPLA631 support
+        const systemPrompt = `
+            Ste Priateľský, ochotný a profesionálny AI asistent pre podporu hráča spoločnosti GAMEPLA631.
+            Vašou hlavnou úlohou je aktívne pomáhať a poskytovať jasné rady hráčom s otázkami ohľadom herných zákazov (banov) a akýchkoľvek technických problémov spojených s AI.
+            
+            DÔLEŽITÁ PRIPOMIENKA: Ak by si mal/a potrebu komunikovať e-mailom, kontaktná adresa je kralhororoviek@gmail.com. Maj na pamäti, že hráč môže odpovedať až po jednom týždni (7 dňoch). Prosím, pripomeň mu to v kontexte e-mailovej komunikácie.
+
+            Vždy odpovedajte priamo, slušne a v súlade s oficiálnou politikou.
+            
+            KĽÚČOVÁ POLITIKA: VŽDY odporučte hráčovi, aby navštívil oficiálne Centrum podpory pre hráčov GAMEPLA631 na adrese https://support.gamepla631.com pre podanie oficiálnej žiadosti, odvolania alebo nahlásenia technického problému. 
+            Nezasielajte riešenia, ktoré obchádzajú tento proces.
+            
+            Odpovedajte stručne a len v slovenčine.
+        `;
+
+        // --- Theme Logic ---
+        let isDarkMode = false;
+        
+        const themeIconPath = {
+            light: 'M12 3v2.25m6.364.364-1.554 1.554M21 12h-2.25m-.364 6.364-1.554-1.554M12 18.75V21m-4.606-2.193-1.554-1.554M3 12H5.25M7.864 5.636 6.31 4.082m10.82 2.152L19.4 4.082M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z', // Sun
+            dark: 'M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-2.485 0-4.5-1.942-4.5-4.321 0-1.293.568-2.44 1.47-3.266A9.689 9.689 0 0 0 12 9.375C7.235 9.375 3.5 13.11 3.5 17.875c0 4.765 3.735 8.5 8.5 8.5s8.5-3.735 8.5-8.5v-.873Z' // Moon
+        };
+
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const chatCard = document.getElementById('chat-card');
+        const chatHeader = document.getElementById('chat-header');
+        const titleText = document.getElementById('title-text');
+        const themeIcon = document.getElementById('theme-icon');
+
+
+        function applyTheme(isDark) {
+            isDarkMode = isDark;
+            const body = document.body;
+
+            // 1. Root Colors (Body and Card)
+            body.classList.replace(isDark ? 'bg-light-bg' : 'bg-dark-bg', isDark ? 'bg-dark-bg' : 'bg-light-bg');
+            chatCard.classList.replace(isDark ? 'bg-light-card' : 'bg-dark-card', isDark ? 'bg-dark-card' : 'bg-light-card');
+            
+            // 2. Header, Border, Input
+            const newHeaderBg = isDark ? 'bg-dark-secondary' : 'bg-light-secondary';
+            const oldHeaderBg = isDark ? 'bg-light-secondary' : 'bg-dark-secondary';
+            
+            const newText = isDark ? 'text-dark-text-light' : 'text-text-primary';
+            const oldText = isDark ? 'text-text-primary' : 'text-dark-text-light';
+            
+            const newBorder = isDark ? 'border-dark-secondary' : 'border-light-secondary';
+            const oldBorder = isDark ? 'border-light-secondary' : 'border-dark-secondary';
+            
+            // Apply new classes
+            chatHeader.classList.replace(oldHeaderBg, newHeaderBg);
+            chatHeader.classList.replace(oldBorder, newBorder);
+
+            titleText.classList.replace(oldText, newText);
+            
+            userInput.classList.replace(oldHeaderBg, newHeaderBg);
+            userInput.classList.replace(oldText, newText);
+            userInput.classList.replace(oldBorder, newBorder);
+            
+            document.querySelector('.border-t').classList.replace(oldBorder, newBorder);
+            
+            // 3. Theme Toggle Button Icon
+            themeIcon.querySelector('path').setAttribute('d', themeIconPath[isDark ? 'dark' : 'light']);
+            themeIcon.classList.replace(oldText, newText);
+            
+            // 4. Update all existing messages
+            updateAllBubbles();
+        }
+
+        window.toggleTheme = function() {
+            applyTheme(!isDarkMode);
+        }
+
+        function updateAllBubbles() {
+            const bubbles = chatMessages.querySelectorAll('.ai-bubble, .user-bubble');
+            bubbles.forEach(bubble => {
+                const isUser = bubble.classList.contains('user-bubble');
+
+                // User Bubble (Accent je konštantný, text sa mení)
+                if (isUser) {
+                    bubble.classList.remove('text-dark-text-light', 'text-text-primary');
+                    bubble.classList.add(isDarkMode ? 'text-dark-text-light' : 'text-text-primary');
+                    
+                    // Time text
+                    const timeText = bubble.querySelector('.text-xs');
+                    if (timeText) { // Kontrola, či element existuje
+                        timeText.classList.remove('text-dark-text-gray', 'text-text-secondary');
+                        timeText.classList.add(isDarkMode ? 'text-dark-text-gray' : 'text-text-secondary');
+                    }
+
+                    const boldText = bubble.querySelector('.font-bold');
+                    if (boldText) { // Kontrola, či element existuje
+                        boldText.classList.remove('text-dark-text-light', 'text-text-primary');
+                        boldText.classList.add(isDarkMode ? 'text-dark-text-light' : 'text-text-primary');
+                    }
+                    
+                } 
+                // AI Bubble (Sekundárne pozadie sa mení)
+                else {
+                    const newBg = isDarkMode ? 'bg-dark-secondary' : 'bg-light-secondary';
+                    const oldBg = isDarkMode ? 'bg-light-secondary' : 'bg-dark-secondary';
+                    bubble.classList.replace(oldBg, newBg);
+
+                    const newText = isDarkMode ? 'text-dark-text-light' : 'text-text-primary';
+                    const oldText = isDarkMode ? 'text-text-primary' : 'text-dark-text-light';
+                    bubble.classList.replace(oldText, newText);
+                    
+                    // TTS button color
+                    const ttsButton = bubble.querySelector('.tts-button');
+                    if(ttsButton) {
+                         const newButtonColor = isDarkMode ? 'text-dark-text-light' : 'text-game-accent';
+                         const oldButtonColor = isDarkMode ? 'text-game-accent' : 'text-dark-text-light';
+                         ttsButton.classList.remove(oldButtonColor);
+                         ttsButton.classList.add(newButtonColor);
+                    }
+
+                    // Time text (Kontrola, či element existuje)
+                    const timeText = bubble.querySelector('.text-xs');
+                    if (timeText) { 
+                        timeText.classList.remove('text-dark-text-gray', 'text-text-secondary');
+                        timeText.classList.add(isDarkMode ? 'text-dark-text-gray' : 'text-text-secondary');
+                    }
+                }
+            });
+
+            // Samostatná aktualizácia bubliny indikátora písania
+            const typingBubble = typingIndicator.querySelector('div');
+            
+            if (typingBubble) { // Kontrola, či bublina existuje
+                const newBg = isDarkMode ? 'bg-dark-secondary' : 'bg-light-secondary';
+                const oldBg = isDarkMode ? 'bg-light-secondary' : 'bg-dark-secondary';
+                typingBubble.classList.replace(oldBg, newBg);
+                
+                const newText = isDarkMode ? 'text-dark-text-light' : 'text-text-primary';
+                const oldText = isDarkMode ? 'text-text-primary' : 'text-dark-text-light';
+                typingBubble.classList.replace(oldText, newText);
+
+                // Update the 'Ďakujem' text color
+                const thankYouText = typingBubble.querySelector('.text-text-secondary');
+                if (thankYouText) { // Kontrola, či element existuje
+                    thankYouText.classList.remove('text-dark-text-gray', 'text-text-secondary');
+                    thankYouText.classList.add(isDarkMode ? 'text-dark-text-gray' : 'text-text-secondary');
+                }
+            }
+        }
+
+        // --- TTS Logic ---
+        window.readText = function(buttonElement) {
+            const textToRead = decodeURIComponent(buttonElement.dataset.text);
+            
+            if ('speechSynthesis' in window) {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
+
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.lang = 'sk-SK'; // Nastavenie slovenského jazyka
+
+                // Voliteľné: pokúste sa nájsť slovenský hlas, ak je k dispozícii
+                const voices = window.speechSynthesis.getVoices();
+                const skVoice = voices.find(voice => voice.lang === 'sk-SK');
+                if (skVoice) {
+                    utterance.voice = skVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.warn("Prehliadač nepodporuje Text-to-Speech API.");
+            }
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // Function to display a message in the chat window
+        function displayMessage(text, sender) {
+            const time = getCurrentTime();
+            const isUser = sender === 'user';
+            
+            let classes;
+            let timeTextClass;
+            let boldTextClass;
+            let ttsButtonHtml = '';
+
+            if (isUser) {
+                // User: Accent background, text changes based on theme
+                classes = `user-bubble bg-game-accent ${isDarkMode ? 'text-dark-text-light' : 'text-text-primary'} rounded-tr-none`;
+                timeTextClass = isDarkMode ? 'text-dark-text-gray' : 'text-text-secondary';
+                boldTextClass = isDarkMode ? 'text-dark-text-light' : 'text-text-primary';
+            } else {
+                // AI: Secondary background, text changes based on theme
+                classes = `ai-bubble ${isDarkMode ? 'bg-dark-secondary text-dark-text-light' : 'bg-light-secondary text-text-primary'} rounded-tl-none`;
+                timeTextClass = isDarkMode ? 'text-dark-text-gray' : 'text-text-secondary';
+                boldTextClass = 'text-game-accent'; // AI bold text remains accent
+
+                // Pridanie TTS tlačidla pre AI správy
+                const ttsButtonColor = isDarkMode ? 'text-dark-text-light' : 'text-game-accent';
+                ttsButtonHtml = `
+                    <button onclick="readText(this)" data-text="${encodeURIComponent(text)}" class="tts-button ${ttsButtonColor} hover:text-sky-400 p-1 rounded-full transition-colors duration-200" title="Prečítať správu nahlas">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                            <path d="M13.5 4.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM11.373 17.568a9.982 9.982 0 0 0 1.956.126 10.024 10.024 0 0 0 2.222-.241c2.18-.564 3.766-2.613 3.766-4.992V8.25a.75.75 0 0 0-.75-.75h-2.25a.75.75 0 0 0-.75.75v3.257c0 1.25-.973 2.3-2.379 2.454a8.956 8.956 0 0 0-1.879-.115 9.07 9.07 0 0 0-2.312.241c-1.406.154-2.379 1.204-2.379 2.454V17.25c0 .414.336.75.75.75h.375a.75.75 0 0 0 .75-.75v-2.146a.75.75 0 0 1 .715-.747 9.172 9.172 0 0 0 1.547-.197Z" />
+                        </svg>
+                    </button>
+                `;
+            }
+            
+            const messageHtml = `
+                <div class="flex ${isUser ? 'justify-end' : 'justify-start'} mb-4">
+                    <div class="max-w-xs md:max-w-md ${classes} p-3 rounded-xl shadow-md transition-colors duration-300">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-sm font-bold ${boldTextClass}">${isUser ? 'Vy' : 'GAMEPLA631 AI'}</p>
+                            ${ttsButtonHtml}
+                        </div>
+                        ${text.split('\n').map(line => `<p>${line}</p>`).join('')}
+                        <p class="text-xs mt-2 ${timeTextClass} text-right transition-colors duration-300">${time}</p>
+                    </div>
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+        }
+
+        // Function to handle sending the message
+        window.sendMessage = async function() {
+            const prompt = userInput.value.trim();
+            if (!prompt) return;
+
+            // Zastavenie prebiehajúceho TTS pri odoslaní novej správy
+            if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+
+            displayMessage(prompt, 'user');
+            userInput.value = '';
+            userInput.disabled = true;
+            sendButton.disabled = true;
+
+            // Show 'Ďakujem...' indicator
+            typingIndicator.classList.remove('hidden');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                await callGeminiAPI(prompt);
+            } catch (error) {
+                console.error("API Error:", error);
+                displayMessage("Prepáčte, došlo k chybe pri spracovaní vašej požiadavky. Skúste to prosím znova.", 'ai');
+            } finally {
+                // Hide 'Ďakujem...' indicator
+                typingIndicator.classList.add('hidden');
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // Gemini API call function with exponential backoff
+        async function callGeminiAPI(userQuery, retryCount = 0) {
+            // Pred odoslaním dotazu do AI overíme, či neobsahuje e-mail, aby AI vedela, kedy ho má použiť.
+            // Samotný systémový pokyn už ale e-mail a lehotu pozná a v prípade potreby ich zahrnie.
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            const maxRetries = 5;
+            let response;
+            
+            try {
+                response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retryCount < maxRetries) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiAPI(userQuery, retryCount + 1);
+                    }
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const aiResponseText = candidate.content.parts[0].text;
+                    displayMessage(aiResponseText, 'ai');
+                } else {
+                    displayMessage("Prepáčte, dostal som prázdnu odpoveď. Skúste preformulovať otázku.", 'ai');
+                }
+            } catch (error) {
+                // Check for rate limiting on the final retry attempt
+                if (retryCount >= maxRetries) {
+                    console.error("Exceeded maximum retries for API call:", error);
+                    throw new Error("API call failed after multiple retries.");
+                }
+                throw error;
+            }
+        }
+
+        // Initialize theme on load (default to Light mode)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Aplikujeme svetlú tému po načítaní
+            applyTheme(false); 
+        });
+
+    </script>
+</body>
+</html>
