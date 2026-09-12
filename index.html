@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Studio GPM - Ultra HD 16:9 Video Engine</title>
+    <title>Anime Studio GPM - AI 3D Engine & SaaS Platform</title>
     <!-- Three.js (3D Grafika) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Pyodide (Python 3.11 WebAssembly) -->
@@ -13,11 +13,12 @@
     <style>
         :root {
             --bg-dark: #030308;
-            --panel-bg: rgba(10, 12, 24, 0.9);
+            --panel-bg: rgba(10, 12, 24, 0.92);
             --neon-blue: #00f0ff;
             --neon-purple: #b000ff;
             --neon-pink: #ff007b;
             --neon-green: #00ff66;
+            --neon-gold: #ffd700;
             --text-main: #f0f4fc;
         }
 
@@ -44,6 +45,7 @@
             z-index: 10;
         }
 
+        .header-left { display: flex; align-items: center; gap: 15px; }
         .logo {
             font-size: 1.2rem;
             font-weight: 900;
@@ -53,19 +55,44 @@
             letter-spacing: 2px;
         }
 
-        .status-badge {
-            font-size: 0.72rem;
-            background: rgba(0, 255, 102, 0.1);
-            color: var(--neon-green);
-            padding: 4px 10px;
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .credits-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid var(--neon-gold);
+            color: var(--neon-gold);
+            padding: 4px 12px;
             border-radius: 20px;
-            border: 1px solid var(--neon-green);
+            font-size: 0.75rem;
             font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .btn-upgrade-header {
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            color: #fff;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 123, 0.5);
+            transition: 0.3s;
+        }
+
+        .btn-upgrade-header:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 0, 123, 0.8);
         }
 
         .studio-container {
             display: grid;
-            grid-template-columns: 460px 1fr;
+            grid-template-columns: 480px 1fr;
             flex: 1;
             height: calc(100vh - 50px);
         }
@@ -78,24 +105,21 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            padding: 14px;
+            padding: 12px;
             z-index: 5;
             overflow-y: auto;
         }
 
-        .engine-tabs {
-            display: flex;
-            gap: 6px;
-        }
+        .engine-tabs { display: flex; gap: 6px; }
 
         .tab-btn {
             flex: 1;
-            padding: 8px;
+            padding: 7px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #888;
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 700;
             cursor: pointer;
             border-radius: 6px;
@@ -109,22 +133,35 @@
             box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
         }
 
+        .tab-btn.ai-tab {
+            background: rgba(255, 0, 123, 0.15);
+            border-color: rgba(255, 0, 123, 0.3);
+            color: var(--neon-pink);
+        }
+
+        .tab-btn.ai-tab.active {
+            background: rgba(255, 0, 123, 0.3);
+            border-color: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255, 0, 123, 0.4);
+        }
+
         .select-box, .input-box {
             width: 100%;
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid rgba(0, 240, 255, 0.3);
             color: white;
-            padding: 8px 10px;
+            padding: 7px 10px;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             outline: none;
         }
 
-        /* RENDER SETTINGS PANEL */
-        .render-settings {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(176, 0, 255, 0.3);
+        /* AI GENERATOR PANEL */
+        .ai-panel {
+            background: rgba(255, 0, 123, 0.06);
+            border: 1px solid rgba(255, 0, 123, 0.3);
             border-radius: 8px;
             padding: 10px;
             display: flex;
@@ -132,9 +169,44 @@
             gap: 8px;
         }
 
-        .settings-title {
+        .ai-title {
             font-size: 0.72rem;
             color: var(--neon-pink);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-ai-gen {
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            color: white;
+            border: none;
+            padding: 9px;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 123, 0.4);
+            transition: 0.3s;
+        }
+
+        .btn-ai-gen:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(255, 0, 123, 0.7); }
+
+        /* RENDER SETTINGS */
+        .render-settings {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(176, 0, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .settings-title {
+            font-size: 0.7rem;
+            color: var(--neon-purple);
             font-weight: 700;
             letter-spacing: 1px;
         }
@@ -143,7 +215,6 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 6px;
-            align-items: center;
         }
 
         .time-group {
@@ -153,7 +224,7 @@
         }
 
         .time-group label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             color: #aaa;
             font-family: 'JetBrains Mono', monospace;
         }
@@ -163,11 +234,11 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
-            min-height: 180px;
+            min-height: 140px;
         }
 
         .editor-container label {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: var(--neon-purple);
             font-family: 'JetBrains Mono', monospace;
         }
@@ -179,25 +250,23 @@
             border-radius: 6px;
             color: #00ff66;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            padding: 10px;
+            font-size: 0.75rem;
+            padding: 8px;
             resize: none;
             outline: none;
-            line-height: 1.4;
+            line-height: 1.35;
             white-space: pre;
             tab-size: 4;
         }
 
-        .code-editor:focus { border-color: var(--neon-blue); }
-
         .terminal {
-            height: 90px;
+            height: 75px;
             background: #000;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
-            padding: 8px;
+            padding: 6px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: #aaa;
             overflow-y: auto;
         }
@@ -213,10 +282,10 @@
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(176, 0, 255, 0.2));
             border: 1px solid var(--neon-blue);
             color: #fff;
-            padding: 10px;
+            padding: 9px;
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.25s ease;
@@ -301,7 +370,7 @@
             border-radius: 6px;
             border: 1px solid rgba(0, 240, 255, 0.3);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: var(--neon-blue);
             pointer-events: none;
             z-index: 10;
@@ -326,25 +395,137 @@
         }
 
         .progress-bar-inner {
-            width: 150px;
+            width: 140px;
             height: 6px;
             background: #222;
             border-radius: 3px;
             overflow: hidden;
         }
 
-        .progress-fill {
-            width: 0%;
-            height: 100%;
-            background: var(--neon-pink);
+        .progress-fill { width: 0%; height: 100%; background: var(--neon-pink); }
+
+        /* MODAL POPUPS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
+
+        .modal-card {
+            background: #080914;
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 900px;
+            width: 95%;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 1.5rem;
+            color: #888;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: #fff; }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .price-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: 0.3s;
+        }
+
+        .price-card.featured {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 123, 0.08);
+            box-shadow: 0 0 25px rgba(255, 0, 123, 0.3);
+            transform: scale(1.02);
+        }
+
+        .price-card.vip {
+            border-color: var(--neon-gold);
+            background: rgba(255, 215, 0, 0.08);
+        }
+
+        .plan-name { font-size: 1.1rem; font-weight: 900; }
+        .plan-price { font-size: 1.5rem; font-weight: 900; color: var(--neon-green); font-family: 'JetBrains Mono', monospace; }
+        .plan-price span { font-size: 0.8rem; color: #888; }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #ccc;
+            font-family: 'JetBrains Mono', monospace;
+            flex: 1;
+        }
+        .feature-list li::before { content: "✔ "; color: var(--neon-green); }
+
+        .gateway-card {
+            max-width: 450px;
+            background: #0a0c1a;
+            border: 1px solid var(--neon-pink);
+            border-radius: 10px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .pay-methods { display: flex; gap: 8px; }
+
+        .pay-tab {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.7rem;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .pay-tab.active { border-color: var(--neon-blue); background: rgba(0, 240, 255, 0.2); }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">✦ ANIME STUDIO GPM // 16:9 ULTRA HD ENGINE</div>
-        <div class="status-badge" id="runtimeStatus">● URSINA 3D READY</div>
+        <div class="header-left">
+            <div class="logo">✦ ANIME STUDIO GPM</div>
+            <div class="status-badge" id="runtimeStatus">● 3 SPUSTENIA DENNE ZDARMA</div>
+        </div>
+        <div class="header-right">
+            <div class="credits-pill">
+                <span>⚡</span>
+                <span id="creditsVal">3 / 3 Spustenia</span>
+                <span style="font-size: 0.65rem; color:#aaa;">(Dnes zdarma)</span>
+            </div>
+            <button class="btn-upgrade-header" onclick="openPricingModal()">⚡ ODOMKNÚŤ PRO (TARIFY)</button>
+        </div>
     </header>
 
     <div class="studio-container">
@@ -352,13 +533,36 @@
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="engine-tabs">
-                <button class="tab-btn active" id="tabPython" onclick="setMode('python')">🐍 PYTHON (URSINA)</button>
-                <button class="tab-btn" id="tabHTML" onclick="setMode('html')">🌐 HTML5 / 3D</button>
+                <button class="tab-btn active" id="tabPython" onclick="setMode('python')">🐍 PYTHON</button>
+                <button class="tab-btn" id="tabHTML" onclick="setMode('html')">🌐 HTML5</button>
+                <button class="tab-btn ai-tab" id="tabAI" onclick="setMode('ai')">🤖 10 AI MODELOV</button>
+            </div>
+
+            <!-- AI GENERATOR PANEL -->
+            <div class="ai-panel" id="aiPanelBox">
+                <div class="ai-title">
+                    <span>✨ GPM AI ANIMATION NEURAL CORE</span>
+                    <span id="aiModelBadge" style="color:var(--neon-gold); font-size:0.65rem;">FREE TIER</span>
+                </div>
+                <select class="select-box" id="aiModelSelect">
+                    <option value="m1">1. 🌀 GPM-NeuralVortex v5.2 [FREE]</option>
+                    <option value="m2">2. 🌐 CyberGenesis 3D Pro [PRO - 1 SPUSTENIE]</option>
+                    <option value="m3">3. ⚛ QuantumHyperDrive XL [PRO - 1 SPUSTENIE]</option>
+                    <option value="m4">4. ✨ AnimeDream-Motion 4K [PRO - 1 SPUSTENIE]</option>
+                    <option value="m5">5. 🌑 VoidSynth DarkMatter [FREE]</option>
+                    <option value="m6">6. 🌌 DeepCosmos Neural 3D [PRO - 1 SPUSTENIE]</option>
+                    <option value="m7">7. 🧬 MorphoMatrix Fluid AI [PRO - 1 SPUSTENIE]</option>
+                    <option value="m8">8. ⚡ ChronoPulse Dilation [PRO - 1 SPUSTENIE]</option>
+                    <option value="m9">9. 🕳 NeonSingularity Core [VIP - 2 SPUSTENIA]</option>
+                    <option value="m10">10. 🔮 HyperHypnosis Ultra-Sync [VIP - 2 SPUSTENIA]</option>
+                </select>
+                <input type="text" id="aiPrompt" class="input-box" placeholder="Zadaj prompt (napr. neónový vortex, anime energia...)">
+                <button class="btn-ai-gen" onclick="generateWithAI()">✨ GENEROVAŤ ANIMÁCIU CEZ AI</button>
             </div>
 
             <!-- RENDER NASTAVENIA -->
             <div class="render-settings">
-                <div class="settings-title">⚙ NASTAVENIE ČASU & KVALITY MP4</div>
+                <div class="settings-title">⚙ EXPORT MP4 (ČAS & OSTRÝ 16:9 RENDER)</div>
                 <div class="time-inputs">
                     <div class="time-group">
                         <label>MINÚTY:</label>
@@ -371,8 +575,8 @@
                     <div class="time-group">
                         <label>KVALITA:</label>
                         <select id="videoRes" class="select-box">
-                            <option value="1080p">1080p FHD</option>
-                            <option value="1440p">2K Ultra</option>
+                            <option value="1080p">1080p FHD (Free)</option>
+                            <option value="1440p">2K Ultra (Pro)</option>
                         </select>
                     </div>
                 </div>
@@ -381,16 +585,16 @@
             <select class="select-box" id="presetSelect" onchange="loadPreset()"></select>
 
             <div class="editor-container">
-                <label id="editorLabel">🐍 PYTHON CODE (16:9 OSTRÝ RENDER)</label>
+                <label id="editorLabel">🐍 PYTHON / HTML CODE EDITOR</label>
                 <textarea class="code-editor" id="codeEditor" spellcheck="false"></textarea>
             </div>
 
             <div class="terminal" id="terminalOutput">
-                <div class="log-info">> Systém pripravený na Full HD 16:9 export.</div>
+                <div class="log-info">> Systém pripravený. Vo Free verzii máš 3 spustenia kódu denne.</div>
             </div>
 
             <div class="btn-group">
-                <button class="btn" id="btnRun" onclick="runCode()">▶ SPUSTIŤ KÓD</button>
+                <button class="btn" id="btnRun" onclick="runCodeWithLimitCheck()">▶ SPUSTIŤ KÓD</button>
                 <button class="btn btn-record" id="btnRecord" onclick="handleRecordClick()">⏺ EXPORT DO MP4</button>
             </div>
         </div>
@@ -402,9 +606,9 @@
                 <iframe id="html-frame-container"></iframe>
 
                 <div class="hud-overlay">
-                    <div>ASPECT: <span style="color: #fff;">16:9 OBDFĹŽNIK</span></div>
-                    <div>SHARPNESS: <span style="color: var(--neon-green);">ULTRA (MSAA 4X)</span></div>
-                    <div>FPS: <span style="color: var(--neon-blue);">60.0</span></div>
+                    <div>PLAN: <span id="hudPlan" style="color: var(--neon-gold);">FREE TIER</span></div>
+                    <div>SPUSTENIA: <span id="hudExecs" style="color: var(--neon-green);">3 / 3</span></div>
+                    <div>ASPECT: <span style="color: #fff;">16:9 CINEMA</span></div>
                 </div>
 
                 <div class="record-progress-box" id="recordBox">
@@ -419,21 +623,225 @@
 
     </div>
 
+    <!-- TARIFY & CENNÍK MODAL -->
+    <div class="modal-overlay" id="pricingModal">
+        <div class="modal-card">
+            <span class="modal-close" onclick="closePricingModal()">&times;</span>
+            <h2 style="color: var(--neon-pink); text-align: center; font-size: 1.5rem; letter-spacing: 2px;">⚡ TARIFY & PRO ČLENSTVO</h2>
+            <p style="text-align: center; color: #888; font-size: 0.8rem; margin-top: 4px;">Odomkni neobmedzené spúšťanie kódu, všetkých 10 AI modelov a 2K/4K export.</p>
+
+            <div class="pricing-grid">
+                <!-- TIER 1: FREE -->
+                <div class="price-card">
+                    <div class="plan-name" style="color: #fff;">FREE STARTER</div>
+                    <div class="plan-price">0 € <span>/ navždy</span></div>
+                    <ul class="feature-list">
+                        <li><strong>3 spustenia kódu denne</strong> zdarma</li>
+                        <li>Automatická obnova spustení každých 24h</li>
+                        <li>Prístup k 2 základným AI modelom</li>
+                        <li>1080p Full HD MP4 Export</li>
+                        <li>Základný Python/Ursina Engine</li>
+                        <li>Komunitná podpora</li>
+                    </ul>
+                    <button class="btn" style="border-color: #555; color: #aaa;" disabled>AKTUÁLNY BALÍK</button>
+                </div>
+
+                <!-- TIER 2: PRO -->
+                <div class="price-card featured">
+                    <div style="background:var(--neon-pink); color:#000; font-size:0.65rem; font-weight:900; padding:2px 8px; border-radius:10px; width:max-content;">NAJPOPULÁRNEJŠIE</div>
+                    <div class="plan-name" style="color: var(--neon-pink);">PRO CREATOR</div>
+                    <div class="plan-price">19 € <span>/ mesiac</span></div>
+                    <ul class="feature-list">
+                        <li><strong>500 spustení kódu & AI</strong> mesačne</li>
+                        <li>Prístup k <strong>8 pokročilým AI modelom</strong></li>
+                        <li>2K Ultra HD (2560x1440) Export</li>
+                        <li>35 Mbps Ultra Ostrosť bez rozmazania</li>
+                        <li>Až 10 minútové MP4 videá</li>
+                        <li>Komerčná licencia na vygenerované videá</li>
+                        <li>Prioritné GPU renderovanie</li>
+                    </ul>
+                    <button class="btn btn-record" onclick="openPaymentGateway('PRO CREATOR', '19 €')">KÚPIŤ PRO CREATOR</button>
+                </div>
+
+                <!-- TIER 3: VIP -->
+                <div class="price-card vip">
+                    <div class="plan-name" style="color: var(--neon-gold);">STUDIO VIP ULTRA</div>
+                    <div class="plan-price">49 € <span>/ mesiac</span></div>
+                    <ul class="feature-list">
+                        <li><strong>NEOBMEDZENÉ (Unlimited)</strong> spúšťanie kódu</li>
+                        <li>Prístup k <strong>všetkým 10 AI modelom</strong></li>
+                        <li>4K Cinema 60 FPS Export</li>
+                        <li>Neobmedzená dĺžka MP4 videí</li>
+                        <li>Dedikovaný Neural GPU Cluster</li>
+                        <li>Vlastné Python API & Webhooks</li>
+                        <li>24/7 Osobná VIP Podpora</li>
+                    </ul>
+                    <button class="btn" style="border-color: var(--neon-gold); background: rgba(255, 215, 0, 0.2); color: var(--neon-gold);" onclick="openPaymentGateway('STUDIO VIP ULTRA', '49 €')">KÚPIŤ VIP ULTRA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLATOBNÁ BRÁNA MODAL -->
+    <div class="modal-overlay" id="gatewayModal">
+        <div class="gateway-card">
+            <span class="modal-close" onclick="closePaymentGateway()">&times;</span>
+            <div style="font-size: 1.1rem; font-weight: 900; color: var(--neon-blue);" id="gatewayPlanTitle">PLATBA ZA BALÍK</div>
+            <div style="font-size: 1.4rem; font-weight: 900; color: var(--neon-green);" id="gatewayPlanPrice">19 €</div>
+            
+            <div class="pay-methods">
+                <div class="pay-tab active">💳 KARTA</div>
+                <div class="pay-tab">🍏 APPLE PAY</div>
+                <div class="pay-tab">⚡ KRYPTO (USDT)</div>
+            </div>
+
+            <input type="text" class="input-box" placeholder="Číslo karty (XXXX XXXX XXXX XXXX)" value="4532 •••• •••• 8921">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input type="text" class="input-box" placeholder="MM/YY" value="12/28">
+                <input type="text" class="input-box" placeholder="CVC" value="842">
+            </div>
+            <input type="text" class="input-box" placeholder="Meno držiteľa karty" value="Alex Anime Creator">
+
+            <button class="btn btn-record" onclick="processPayment()">🔒 ZAPLATIŤ A ODOMKNÚŤ</button>
+            <div style="font-size: 0.65rem; color: #777; text-align: center;">256-bit SSL šifrovaná bezpečná platobná brána GPM Cloud.</div>
+        </div>
+    </div>
+
     <script>
+        // --- KREDITOVÝ A LIMITNÝ SYSTÉM S DENNOU OBNOVOU ---
+        let currentPlan = localStorage.getItem('gpm_plan') || 'FREE';
+        let userCredits = parseInt(localStorage.getItem('gpm_credits') !== null ? localStorage.getItem('gpm_credits') : "3");
+        let lastDate = localStorage.getItem('gpm_last_date');
+        const todayDate = new Date().toISOString().slice(0, 10);
+
+        // Denný reset o polnoci pre FREE účet (obnoví na 3 spustenia)
+        if (lastDate !== todayDate && currentPlan === 'FREE') {
+            userCredits = 3;
+            localStorage.setItem('gpm_credits', "3");
+            localStorage.setItem('gpm_last_date', todayDate);
+        }
+
+        function updateCreditsUI() {
+            const creditsEl = document.getElementById('creditsVal');
+            const hudPlan = document.getElementById('hudPlan');
+            const hudExecs = document.getElementById('hudExecs');
+
+            if (currentPlan === 'VIP') {
+                creditsEl.textContent = "⚡ NEOBMEDZENE";
+                hudPlan.textContent = "VIP ULTRA";
+                hudExecs.textContent = "UNLIMITED";
+            } else if (currentPlan === 'PRO') {
+                creditsEl.textContent = `⚡ ${userCredits} Spustení (PRO)`;
+                hudPlan.textContent = "PRO CREATOR";
+                hudExecs.textContent = `${userCredits} PRO`;
+            } else {
+                creditsEl.textContent = `⚡ ${userCredits} / 3 Spustenia`;
+                hudPlan.textContent = "FREE TIER";
+                hudExecs.textContent = `${userCredits} / 3`;
+            }
+            localStorage.setItem('gpm_credits', userCredits.toString());
+            localStorage.setItem('gpm_plan', currentPlan);
+        }
+        updateCreditsUI();
+
+        // --- KONTROLA LIMITU SPUSTENIA KÓDU ---
+        function runCodeWithLimitCheck() {
+            if (currentPlan === 'FREE') {
+                if (userCredits <= 0) {
+                    log("❌ LIMIT VYČERPANÝ: Vyčerpal si 3 bezplatné spustenia kódu na dnes!", "error");
+                    alert("⚠️ Vyčerpal si limit 3 bezplatných spustení kódu na dnes!\nPrejdi na PRO balík alebo počkaj na polnočnú obnovu.");
+                    openPricingModal();
+                    return;
+                }
+                userCredits--;
+                log(`⚡ Odpočítané 1 spustenie kódu. Zostáva: ${userCredits}/3 na dnes.`, "info");
+            } else if (currentPlan === 'PRO') {
+                if (userCredits <= 0) {
+                    alert("Vyčerpal si PRO spustenia na tento mesiac!");
+                    openPricingModal();
+                    return;
+                }
+                userCredits--;
+            }
+            updateCreditsUI();
+            runCode();
+        }
+
+        // --- 10 AI MODELOV ---
+        const aiModelGenerators = {
+            m1: { name: "GPM-NeuralVortex v5.2", tier: "FREE", cost: 0, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=12;const rings=[];for(let i=0;i<40;i++){const g=new THREE.TorusGeometry(5+Math.sin(i*0.3)*2,0.08,16,80);const m=new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(i/40,1,0.5),wireframe:true});const mesh=new THREE.Mesh(g,m);mesh.position.z=-i*3;s.add(mesh);rings.push(mesh);}function l(t){requestAnimationFrame(l);rings.forEach((rg,idx)=>{rg.rotation.z=t*0.001+idx*0.05;rg.position.z=((rg.position.z+10+t*0.015)%120)-110;});r.render(s,c);}l(0);<\/script></body></html>` },
+            m2: { name: "CyberGenesis 3D Pro", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#03030c;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.set(0,4,15);c.lookAt(0,0,0);const grid=new THREE.GridHelper(100,50,0x00f0ff,0xff007b);s.add(grid);const cubes=[];for(let i=0;i<30;i++){const g=new THREE.BoxGeometry(1.5,Math.random()*6+1,1.5);const m=new THREE.MeshBasicMaterial({color:(i%2===0)?0x00f0ff:0xff007b,wireframe:true});const cb=new THREE.Mesh(g,m);cb.position.set((Math.random()-0.5)*40,cb.geometry.parameters.height/2,(Math.random()-0.5)*40);s.add(cb);cubes.push(cb);}function l(t){requestAnimationFrame(l);grid.position.z=(t*0.01)%2;cubes.forEach(b=>{b.rotation.y+=0.01;});r.render(s,c);}l(0);<\/script></body></html>` },
+            m3: { name: "QuantumHyperDrive XL", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=14;const knot=new THREE.Mesh(new THREE.TorusKnotGeometry(4.5,1.2,120,20),new THREE.MeshBasicMaterial({color:0x00ff66,wireframe:true}));s.add(knot);function l(t){requestAnimationFrame(l);knot.rotation.x=t*0.001;knot.rotation.y=t*0.0015;r.render(s,c);}l(0);<\/script></body></html>` },
+            m4: { name: "AnimeDream-Motion 4K", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#050010;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=15;const geo=new THREE.IcosahedronGeometry(6,3);const mat=new THREE.MeshBasicMaterial({color:0xff007b,wireframe:true});const mesh=new THREE.Mesh(geo,mat);s.add(mesh);function l(t){requestAnimationFrame(l);mesh.rotation.y=t*0.0008;mesh.rotation.z=t*0.0005;r.render(s,c);}l(0);<\/script></body></html>` },
+            m5: { name: "VoidSynth DarkMatter", tier: "FREE", cost: 0, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=10;const sph=new THREE.Mesh(new THREE.SphereGeometry(4,16,16),new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true}));s.add(sph);function l(t){requestAnimationFrame(l);sph.rotation.x=t*0.0005;sph.rotation.y=t*0.001;r.render(s,c);}l(0);<\/script></body></html>` },
+            m6: { name: "DeepCosmos Neural 3D", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#010108;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=20;const cnt=2000;const geo=new THREE.BufferGeometry();const pos=new Float32Array(cnt*3);for(let i=0;i<cnt*3;i++)pos[i]=(Math.random()-0.5)*50;geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const p=new THREE.Points(geo,new THREE.PointsMaterial({size:0.2,color:0x00f0ff}));s.add(p);function l(t){requestAnimationFrame(l);p.rotation.y=t*0.0003;r.render(s,c);}l(0);<\/script></body></html>` },
+            m7: { name: "MorphoMatrix Fluid AI", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=12;const geo=new THREE.OctahedronGeometry(5,2);const mat=new THREE.MeshBasicMaterial({color:0xb000ff,wireframe:true});const m=new THREE.Mesh(geo,mat);s.add(m);function l(t){requestAnimationFrame(l);m.rotation.x=t*0.001;m.rotation.z=t*0.001;r.render(s,c);}l(0);<\/script></body></html>` },
+            m8: { name: "ChronoPulse Dilation", tier: "PRO", cost: 1, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=15;const rings=[];for(let i=0;i<20;i++){const rg=new THREE.Mesh(new THREE.RingGeometry(i*0.6,i*0.6+0.2,32),new THREE.MeshBasicMaterial({color:0x00ff66,side:THREE.DoubleSide,wireframe:true}));s.add(rg);rings.push(rg);}function l(t){requestAnimationFrame(l);rings.forEach((rg,i)=>{rg.rotation.z=t*0.001*(i%2===0?1:-1);});r.render(s,c);}l(0);<\/script></body></html>` },
+            m9: { name: "NeonSingularity Core", tier: "VIP", cost: 2, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=16;const core=new THREE.Mesh(new THREE.SphereGeometry(3,32,32),new THREE.MeshBasicMaterial({color:0xffd700,wireframe:true}));const ring=new THREE.Mesh(new THREE.TorusGeometry(7,0.4,16,100),new THREE.MeshBasicMaterial({color:0xff007b,wireframe:true}));ring.rotation.x=Math.PI/3;s.add(core);s.add(ring);function l(t){requestAnimationFrame(l);core.rotation.y=t*0.001;ring.rotation.z=t*0.002;r.render(s,c);}l(0);<\/script></body></html>` },
+            m10: { name: "HyperHypnosis Ultra-Sync", tier: "VIP", cost: 2, code: `<!DOCTYPE html><html><head><style>body{margin:0;background:#000;overflow:hidden;}canvas{width:100vw;height:100vh;}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script></head><body><canvas id="c"></canvas><script>const canvas=document.getElementById('c');const r=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});r.setSize(1920,1080,false);const s=new THREE.Scene();const c=new THREE.PerspectiveCamera(75,16/9,0.1,1000);c.position.z=14;const list=[];for(let i=0;i<30;i++){const mesh=new THREE.Mesh(new THREE.TorusGeometry(3+i*0.3,0.05,8,50),new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL((i*15)%360/360,1,0.5),wireframe:true}));s.add(mesh);list.push(mesh);}function l(t){requestAnimationFrame(l);list.forEach((m,idx)=>{m.rotation.z=Math.sin(t*0.002+idx*0.2)*Math.PI;m.rotation.x=Math.cos(t*0.001+idx*0.1)*Math.PI*0.5;});r.render(s,c);}l(0);<\/script></body></html>` }
+        };
+
+        function generateWithAI() {
+            const modelKey = document.getElementById('aiModelSelect').value;
+            const model = aiModelGenerators[modelKey];
+
+            if (model.tier === 'PRO' && currentPlan === 'FREE') {
+                alert("Tento model je dostupný iba pre PRO členov!");
+                openPricingModal();
+                return;
+            } else if (model.tier === 'VIP' && currentPlan !== 'VIP') {
+                alert("Tento model vyžaduje VIP Ultra členstvo!");
+                openPricingModal();
+                return;
+            }
+
+            if (currentPlan === 'FREE' && userCredits <= 0) {
+                alert("Vyčerpal si 3 bezplatné spustenia na dnes!");
+                openPricingModal();
+                return;
+            }
+
+            setMode('html');
+            document.getElementById('codeEditor').value = model.code;
+            log(`AI Model ${model.name} vygeneroval kód...`, 'success');
+            runCodeWithLimitCheck();
+        }
+
+        // --- MODAL & PLATOBNÁ BRÁNA ---
+        function openPricingModal() { document.getElementById('pricingModal').style.display = "flex"; }
+        function closePricingModal() { document.getElementById('pricingModal').style.display = "none"; }
+
+        let targetPlan = "";
+        function openPaymentGateway(plan, price) {
+            targetPlan = plan;
+            closePricingModal();
+            document.getElementById('gatewayPlanTitle').textContent = `PLATBA ZA ${plan}`;
+            document.getElementById('gatewayPlanPrice').textContent = price;
+            document.getElementById('gatewayModal').style.display = "flex";
+        }
+        function closePaymentGateway() { document.getElementById('gatewayModal').style.display = "none"; }
+
+        function processPayment() {
+            log(`Platba úspešná! Aktivovaný balík: ${targetPlan}`, 'success');
+            if (targetPlan.includes('PRO')) {
+                currentPlan = 'PRO';
+                userCredits = 500;
+            } else if (targetPlan.includes('VIP')) {
+                currentPlan = 'VIP';
+                userCredits = 999999;
+            }
+            updateCreditsUI();
+            closePaymentGateway();
+            alert(`🎉 Platba úspešná! Získal si ${currentPlan} účet s odomknutými funkciami.`);
+        }
+
+        // --- ENGINE ---
         let currentMode = 'python';
         let pyodideInstance = null;
         let animationFrameId = null;
 
-        // Nastavenie Three.js pre OSTRÝ 16:9 RENDER
         const canvas = document.getElementById('viewport-3d');
-        const renderer = new THREE.WebGLRenderer({ 
-            canvas, 
-            antialias: true, 
-            preserveDrawingBuffer: true,
-            powerPreference: "high-performance"
-        });
-
-        // Pevné Full HD rozlíšenie 1920x1080 pre nulové rozmazanie
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
         renderer.setSize(1920, 1080, false);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -455,220 +863,58 @@
             terminal.scrollTop = terminal.scrollHeight;
         }
 
-        // --- 1. PYTHON & URSINA ENGINE ---
         async function initPythonEngine() {
             try {
                 runtimeStatus.textContent = "⏳ NAČÍTAVAM ENGINE...";
-                log("Inicializujem Full HD Python WebAssembly...", "info");
-                pyodideInstance = await loadPyodide({
-                    stdout: (text) => log(text, 'info'),
-                    stderr: (text) => log(text, 'error')
-                });
-
+                pyodideInstance = await loadPyodide({ stdout: (text) => log(text, 'info'), stderr: (text) => log(text, 'error') });
                 await pyodideInstance.runPythonAsync(`
 import js, math
-
 class Color:
     def __init__(self):
-        self.cyan = 0x00f0ff
-        self.pink = 0xff007b
-        self.purple = 0xb000ff
-        self.green = 0x00ff66
-        self.white = 0xffffff
-        self.gold = 0xffd700
-    def rgb(self, r, g, b):
-        return (int(r * 255) << 16) + (int(g * 255) << 8) + int(b * 255)
-
+        self.cyan=0x00f0ff; self.pink=0xff007b; self.purple=0xb000ff; self.green=0x00ff66; self.gold=0xffd700; self.white=0xffffff
 color = Color()
-
 class Entity:
     def __init__(self, model='cube', color=0x00f0ff, scale=1, wireframe=True, position=(0,0,0)):
-        self.model_type = model
-        self.color = color
-        self.wireframe = wireframe
-        self.x, self.y, self.z = position
-        self.scale_val = scale
-        self.rotation_x = 0
-        self.rotation_y = 0
-        self.rotation_z = 0
+        self.model_type=model; self.color=color; self.wireframe=wireframe; self.x,self.y,self.z=position; self.scale_val=scale; self.rotation_x=0; self.rotation_y=0; self.rotation_z=0
         self.id = js.createJsEntity(model, color, wireframe, self.x, self.y, self.z, scale)
-
     def sync(self):
         js.updateJsEntity(self.id, self.x, self.y, self.z, self.rotation_x, self.rotation_y, self.rotation_z, self.scale_val)
-
 class Ursina:
-    def __init__(self):
-        js.reset3DScene()
-    def run(self):
-        pass
-
+    def __init__(self): js.reset3DScene()
+    def run(self): pass
 import sys, types
 ursina_module = types.ModuleType('ursina')
-ursina_module.Entity = Entity
-ursina_module.Ursina = Ursina
-ursina_module.color = color
-ursina_module.math = math
+ursina_module.Entity = Entity; ursina_module.Ursina = Ursina; ursina_module.color = color; ursina_module.math = math
 sys.modules['ursina'] = ursina_module
 `);
-                runtimeStatus.textContent = "● PYTHON 16:9 ONLINE";
-                log("Ursina 3D Engine pripravený v 16:9 rozlíšení!", "success");
-            } catch (err) {
-                log("Chyba: " + err, "error");
-            }
+                runtimeStatus.textContent = "● PYTHON & AI ONLINE";
+                log("Ursina 3D + AI Modely pripravené!", "success");
+            } catch (err) { log("Chyba: " + err, "error"); }
         }
         initPythonEngine();
 
-        // Three.js Bridge
         let entityCounter = 0;
         let meshMap = {};
-
         window.reset3DScene = function() {
             for (let id in meshMap) scene.remove(meshMap[id]);
-            meshMap = {};
-            entityCounter = 0;
-            scene.fog = new THREE.FogExp2(0x010104, 0.022);
+            meshMap = {}; entityCounter = 0; scene.fog = new THREE.FogExp2(0x010104, 0.022);
         };
-
         window.createJsEntity = function(model, col, wireframe, x, y, z, scale) {
-            let geo;
-            if (model === 'cube') geo = new THREE.BoxGeometry(scale, scale, scale);
-            else if (model === 'sphere') geo = new THREE.SphereGeometry(scale, 32, 32);
-            else if (model === 'torus') geo = new THREE.TorusGeometry(scale, scale * 0.28, 20, 80);
-            else if (model === 'knot') geo = new THREE.TorusKnotGeometry(scale, scale * 0.35, 120, 20);
-            else geo = new THREE.BoxGeometry(scale, scale, scale);
-
-            const mat = new THREE.MeshBasicMaterial({ color: col, wireframe: wireframe });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
-
-            const id = entityCounter++;
-            meshMap[id] = mesh;
-            return id;
+            let geo = (model==='sphere')?new THREE.SphereGeometry(scale,32,32):(model==='torus'?new THREE.TorusGeometry(scale,scale*0.28,20,80):(model==='knot'?new THREE.TorusKnotGeometry(scale,scale*0.35,120,20):new THREE.BoxGeometry(scale,scale,scale)));
+            const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, wireframe: wireframe }));
+            mesh.position.set(x, y, z); scene.add(mesh);
+            const id = entityCounter++; meshMap[id] = mesh; return id;
         };
-
         window.updateJsEntity = function(id, x, y, z, rx, ry, rz, s) {
-            const mesh = meshMap[id];
-            if (mesh) {
-                mesh.position.set(x, y, z);
-                mesh.rotation.set(rx, ry, rz);
-                mesh.scale.set(s, s, s);
-            }
+            if (meshMap[id]) { meshMap[id].position.set(x, y, z); meshMap[id].rotation.set(rx, ry, rz); meshMap[id].scale.set(s, s, s); }
         };
 
-        // --- 2. PRESETS ---
         const presets = {
             python: {
-                "🌀 16:9 Hypnotický Laserový Tunel": `from ursina import *
-import math
-
-app = Ursina()
-
-# 16:9 Hypnotická Geometria
-rings = []
-for i in range(40):
-    ring = Entity(
-        model='torus',
-        color=color.pink if i % 2 == 0 else color.cyan,
-        scale=5.5 + math.sin(i * 0.25) * 2.0,
-        wireframe=True,
-        position=(0, 0, -i * 2.8)
-    )
-    rings.append(ring)
-
-core = Entity(model='knot', color=color.green, scale=2.0, wireframe=True)
-
-t = 0
-def update():
-    global t
-    t += 0.03
-    
-    core.rotation_x += 0.02
-    core.rotation_y += 0.04
-    core.sync()
-    
-    for idx, r in enumerate(rings):
-        r.rotation_z = t * 0.6 + idx * 0.08
-        r.z = ((r.z + 10 + t * 5.0) % 115) - 105
-        r.sync()
-
-app.run()
-`,
-                "✨ 16:9 Kybernetická Kvantová Dimenzia": `from ursina import *
-import math, random
-
-app = Ursina()
-
-cubes = []
-for i in range(60):
-    c = Entity(
-        model='cube',
-        color=color.cyan if i % 3 == 0 else (color.pink if i % 3 == 1 else color.purple),
-        scale=random.uniform(0.6, 2.0),
-        wireframe=True,
-        position=(
-            random.uniform(-22, 22),
-            random.uniform(-12, 12),
-            random.uniform(-35, 5)
-        )
-    )
-    cubes.append(c)
-
-t = 0
-def update():
-    global t
-    t += 0.025
-    for i, c in enumerate(cubes):
-        c.rotation_x += 0.02
-        c.rotation_y += 0.03
-        c.y += math.sin(t * 2 + i) * 0.04
-        c.sync()
-
-app.run()
-`
+                "🌀 16:9 Hypnotický Tunel (Ursina)": `from ursina import *\nimport math\napp = Ursina()\nrings = [Entity(model='torus', color=color.pink if i%2==0 else color.cyan, scale=5.5+math.sin(i*0.25)*2.0, wireframe=True, position=(0,0,-i*2.8)) for i in range(40)]\ncore = Entity(model='knot', color=color.green, scale=2.0, wireframe=True)\nt = 0\ndef update():\n    global t\n    t += 0.03\n    core.rotation_x += 0.02; core.rotation_y += 0.04; core.sync()\n    for idx, r in enumerate(rings):\n        r.rotation_z = t * 0.6 + idx * 0.08\n        r.z = ((r.z + 10 + t * 5.0) % 115) - 105\n        r.sync()\napp.run()`
             },
             html: {
-                "🌀 16:9 Ultra-HD Three.js Vortex": `<!DOCTYPE html>
-<html>
-<head>
-<style> body { margin:0; overflow:hidden; background:#000; } canvas { width:100vw; height:100vh; display:block; } </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
-</head>
-<body>
-<canvas id="c"></canvas>
-<script>
-  const canvas = document.getElementById('c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(1920, 1080, false);
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000);
-  camera.position.z = 12;
-
-  const rings = [];
-  for(let i = 0; i < 45; i++) {
-    const geo = new THREE.TorusGeometry(5 + Math.sin(i * 0.25) * 1.8, 0.08, 16, 80);
-    const mat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color().setHSL(i / 45, 1, 0.5),
-      wireframe: true
-    });
-    const ring = new THREE.Mesh(geo, mat);
-    ring.position.z = -i * 2.8;
-    scene.add(ring);
-    rings.push(ring);
-  }
-
-  function loop(t) {
-    requestAnimationFrame(loop);
-    rings.forEach((r, idx) => {
-      r.rotation.z = t * 0.001 + idx * 0.04;
-      r.position.z = ((r.position.z + 10 + t * 0.012) % 125) - 115;
-    });
-    renderer.render(scene, camera);
-  }
-  loop(0);
-<\/script>
-</body>
-</html>`
+                "🌐 16:9 Cyber World Matrix": aiModelGenerators.m2.code
             }
         };
 
@@ -676,110 +922,76 @@ app.run()
             currentMode = mode;
             document.getElementById('tabPython').classList.toggle('active', mode === 'python');
             document.getElementById('tabHTML').classList.toggle('active', mode === 'html');
-            document.getElementById('editorLabel').textContent = mode === 'python' ? '🐍 PYTHON (URSINA 3D ENGINE)' : '🌐 HTML5 / 3D WEBGL ENGINE';
-            
-            presetSelect.innerHTML = '';
-            for (let name in presets[mode]) {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                presetSelect.appendChild(opt);
+            document.getElementById('tabAI').classList.toggle('active', mode === 'ai');
+
+            if (mode === 'ai') {
+                document.getElementById('aiPanelBox').style.display = "flex";
+            } else {
+                presetSelect.innerHTML = '';
+                for (let name in presets[mode]) {
+                    const opt = document.createElement('option'); opt.value = name; opt.textContent = name; presetSelect.appendChild(opt);
+                }
+                loadPreset();
             }
-            loadPreset();
         }
 
         function loadPreset() {
             const selected = presetSelect.value;
-            if (presets[currentMode][selected]) {
+            if (presets[currentMode] && presets[currentMode][selected]) {
                 editor.value = presets[currentMode][selected];
             }
         }
-
         setMode('python');
 
-        // --- 3. EXEKÚCIA KÓDU ---
         function runCode() {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
             const code = editor.value;
-            log(`Spúšťam ${currentMode.toUpperCase()} render v 16:9...`, 'info');
 
             if (currentMode === 'python') {
-                htmlFrame.style.display = "none";
-                canvas.style.display = "block";
-
-                if (!pyodideInstance) {
-                    log("Python sa načítava...", "error");
-                    return;
-                }
-
+                htmlFrame.style.display = "none"; canvas.style.display = "block";
+                if (!pyodideInstance) return;
                 try {
                     reset3DScene();
                     pyodideInstance.runPython(code);
-                    
                     function renderLoop() {
-                        try {
-                            if (pyodideInstance.globals.get('update')) {
-                                pyodideInstance.runPython("if 'update' in globals(): update()");
-                            }
-                        } catch (err) {
-                            log(`Python Error: ${err}`, "error");
-                            return;
-                        }
+                        try { if (pyodideInstance.globals.get('update')) pyodideInstance.runPython("if 'update' in globals(): update()"); } catch (e) { return; }
                         renderer.render(scene, camera);
                         animationFrameId = requestAnimationFrame(renderLoop);
                     }
                     renderLoop();
-                    log("16:9 Animácia beží v plnej ostrosti!", "success");
-
-                } catch (err) {
-                    log(`Python Error: ${err}`, "error");
-                }
-
-            } else if (currentMode === 'html') {
-                canvas.style.display = "none";
-                htmlFrame.style.display = "block";
-                htmlFrame.srcdoc = code;
-                log("HTML 16:9 Scéna spustená!", "success");
+                    log("Python 16:9 kód spustený!", "success");
+                } catch (e) { log(`Python Error: ${e}`, "error"); }
+            } else {
+                canvas.style.display = "none"; htmlFrame.style.display = "block"; htmlFrame.srcdoc = code;
+                log("HTML5 / AI Animácia vyrenderovaná!", "success");
             }
         }
 
-        // --- 4. EXPORT DO MP4 (VLASTNÝ ČAS & ULTRA OSTROSŤ) ---
-        let mediaRecorder;
-        let recordedChunks = [];
-        let isRecording = false;
+        // --- EXPORT MP4 ---
+        let mediaRecorder, recordedChunks = [], isRecording = false;
 
         function handleRecordClick() {
             const min = parseInt(document.getElementById('videoMin').value) || 0;
             const sec = parseInt(document.getElementById('videoSec').value) || 0;
             const totalSeconds = (min * 60) + sec;
+            if (totalSeconds <= 0) return alert("Zadaj platný čas pre video!");
 
-            if (totalSeconds <= 0) {
-                log("Zadaj platný čas pre video (aspoň 1 sekundu)!", "error");
+            if (document.getElementById('videoRes').value === '1440p' && currentPlan === 'FREE') {
+                alert("2K export je dostupný pre PRO používateľov!");
+                openPricingModal();
                 return;
             }
-
-            const res = document.getElementById('videoRes').value;
-            if (res === '1440p') {
-                renderer.setSize(2560, 1440, false);
-            } else {
-                renderer.setSize(1920, 1080, false);
-            }
-
             startRecording(totalSeconds);
         }
 
         function formatTime(s) {
-            const m = Math.floor(s / 60);
-            const remainingSec = Math.floor(s % 60);
+            const m = Math.floor(s / 60); const remainingSec = Math.floor(s % 60);
             return `${m.toString().padStart(2, '0')}:${remainingSec.toString().padStart(2, '0')}`;
         }
 
         function startRecording(durationSeconds) {
             if (isRecording) return;
-            isRecording = true;
-            recordedChunks = [];
-
+            isRecording = true; recordedChunks = [];
             const btnRecord = document.getElementById('btnRecord');
             const recordBox = document.getElementById('recordBox');
             const progressFill = document.getElementById('progressFill');
@@ -789,70 +1001,33 @@ app.run()
             btnRecord.textContent = "⏺ SPRACOVÁVAM...";
             recordBox.style.display = "flex";
 
-            let stream;
-            if (currentMode === 'python') {
-                stream = canvas.captureStream(60);
-            } else {
-                try {
-                    const iframeCanvas = htmlFrame.contentDocument.querySelector('canvas');
-                    stream = iframeCanvas ? iframeCanvas.captureStream(60) : canvas.captureStream(60);
-                } catch(e) {
-                    stream = canvas.captureStream(60);
-                }
-            }
+            let stream = (currentMode === 'python') ? canvas.captureStream(60) : (htmlFrame.contentDocument.querySelector('canvas') ? htmlFrame.contentDocument.querySelector('canvas').captureStream(60) : canvas.captureStream(60));
+            const options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 35000000 };
 
-            // Nastavenie extrémnej ostrosti: 35 000 000 bps (35 Mbps)
-            const options = { 
-                mimeType: 'video/webm;codecs=vp9',
-                videoBitsPerSecond: 35000000 
-            };
+            try { mediaRecorder = new MediaRecorder(stream, options); } catch(e) { mediaRecorder = new MediaRecorder(stream); }
 
-            try {
-                mediaRecorder = new MediaRecorder(stream, options);
-            } catch (e) {
-                try {
-                    mediaRecorder = new MediaRecorder(stream, { videoBitsPerSecond: 35000000 });
-                } catch(err) {
-                    mediaRecorder = new MediaRecorder(stream);
-                }
-            }
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) recordedChunks.push(e.data);
-            };
-
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
             mediaRecorder.onstop = () => {
                 const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `GPM_16x9_ULTRA_HD_${Date.now()}.mp4`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
+                a.href = url; a.download = `GPM_AI_STUDIO_${Date.now()}.mp4`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 btnRecord.classList.remove('recording');
                 btnRecord.textContent = "⏺ EXPORT DO MP4";
                 recordBox.style.display = "none";
                 isRecording = false;
-                log(`Hotovo! Video (${formatTime(durationSeconds)}) bolo v plnej kvalite stiahnuté.`, "success");
+                log(`Hotovo! Video (${formatTime(durationSeconds)}) bolo úspešne stiahnuté.`, "success");
             };
 
-            mediaRecorder.start(1000); // chunk každú sekundu
-
+            mediaRecorder.start(1000);
             let elapsed = 0;
-            const interval = 200;
             const timer = setInterval(() => {
-                elapsed += interval / 1000;
-                const percent = Math.min((elapsed / durationSeconds) * 100, 100);
-                progressFill.style.width = percent + "%";
+                elapsed += 0.2;
+                progressFill.style.width = Math.min((elapsed / durationSeconds) * 100, 100) + "%";
                 recordTimer.textContent = `${formatTime(elapsed)} / ${formatTime(durationSeconds)}`;
-
-                if (elapsed >= durationSeconds) {
-                    clearInterval(timer);
-                    mediaRecorder.stop();
-                }
-            }, interval);
+                if (elapsed >= durationSeconds) { clearInterval(timer); mediaRecorder.stop(); }
+            }, 200);
         }
     </script>
 </body>
